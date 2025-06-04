@@ -152,7 +152,11 @@ function App() {
             <textarea
               value={value}
               onChange={e => handleChange(id, e.target.value)}
-              placeholder="例: 1-2-3,4,5 や 1,2,3,4"
+              placeholder={`例：
+1頭流し：1-2,3,4
+2頭流し：1-2-3,4,5
+フォーメーション：1-2,3-2,3,4,5
+ボックス：1,2,3,4`}
               rows={6}
             />
             <input
