@@ -1,0 +1,79 @@
+/* 共通スタイル */
+.app-container {
+  padding: 1rem;
+  font-family: sans-serif;
+}
+
+.set-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.set-box {
+  border: 1px solid #ccc;
+  padding: 1rem;
+  width: 300px;
+  flex-shrink: 0;
+}
+
+.set-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+textarea {
+  width: 100%;
+  font-size: 1rem;
+}
+
+.file-input {
+  margin-top: 0.5rem;
+}
+
+.expanded-list {
+  font-size: 0.85em;
+  margin-top: 0.25rem;
+}
+
+.action-bar {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+/* ✅ モバイル対応（スマホ用） */
+@media (max-width: 600px) {
+  .set-container {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .set-box {
+    width: 75%; /* 横幅 6分の1 短く（約25%減） */
+    font-size: 0.85rem;
+    padding: 0.4rem;
+  }
+
+  textarea {
+    font-size: 0.85rem;
+    height: 50px; /* 以前の 100px → 50px に（さらに1/2） */
+  }
+
+  button {
+    font-size: 0.85rem;
+    padding: 0.3rem 0.5rem;
+  }
+
+  .file-input {
+    display: none;
+  }
+
+  .expanded-list {
+    font-size: 0.75rem;
+  }
+}
