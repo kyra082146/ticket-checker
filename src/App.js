@@ -20,9 +20,9 @@ function parseTickets(input, isTrifecta) {
 function expandTicketLine(line, isTrifecta) {
   const parts = line.split("-").map(p => p.split(","));
 
-  if (parts.length === 1 && parts[0].length > 3) {
+  if (parts.length === 1 && parts[0].length >= 3) {
     const box = parts[0];
-    return generateCombinations(box, 3, isTrifecta);
+    return isTrifecta ? generatePermutations(box, 3) : generateCombinations(box, 3);
   }
 
   if (parts.length === 2) {
@@ -59,20 +59,38 @@ function expandTicketLine(line, isTrifecta) {
   return [line];
 }
 
-function generateCombinations(arr, r, isTrifecta) {
+function generateCombinations(arr, r) {
   const results = [];
-  const helper = (prefix, rest) => {
-    if (prefix.length === r) {
-      if (new Set(prefix).size === r) {
-        results.push(isTrifecta ? prefix.slice().join("-") : prefix.slice().sort().join("-"));
-      }
+  const combine = (start, combo) => {
+    if (combo.length === r) {
+      results.push(combo.slice().sort().join("-"));
       return;
     }
-    for (let i = 0; i < rest.length; i++) {
-      helper([...prefix, rest[i]], rest.slice(0, i).concat(rest.slice(i + 1)));
+    for (let i = start; i < arr.length; i++) {
+      combine(i + 1, [...combo, arr[i]]);
     }
   };
-  helper([], arr);
+  combine(0, []);
+  return results;
+}
+
+function generatePermutations(arr, r) {
+  const results = [];
+  const permute = (path, used) => {
+    if (path.length === r) {
+      results.push(path.join("-"));
+      return;
+    }
+    for (let i = 0; i < arr.length; i++) {
+      if (used[i]) continue;
+      used[i] = true;
+      path.push(arr[i]);
+      permute(path, used);
+      path.pop();
+      used[i] = false;
+    }
+  };
+  permute([], Array(arr.length).fill(false));
   return results;
 }
 
@@ -163,7 +181,7 @@ function App() {
               value={value}
               onChange={e => handleChange(id, e.target.value)}
               placeholder={`例：
-1頭流し：1-2,3,4
+1頭流し：1-2,3,4-2,3,4
 2頭流し：1-2-3,4,5
 フォーメーション：1-2,3-2,3,4,5
 ボックス：1,2,3,4`}
