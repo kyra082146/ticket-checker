@@ -147,6 +147,7 @@ function App() {
           <div key={id} className="set-box">
             <div className="set-header">
               <strong>セット {id}</strong>
+              {expanded[id] && <span>（{expanded[id].length}点）</span>}
               {inputs.length > 1 && (
                 <button onClick={() => handleRemoveSet(id)}>削除</button>
               )}
