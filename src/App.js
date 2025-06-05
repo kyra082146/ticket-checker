@@ -30,9 +30,14 @@ function expandTicketLine(line, isTrifecta) {
     const targets = parts[1];
     const results = [];
     for (const t of targets) {
-      results.push([...base, t]);
+      const combo = [...base, t];
+      if (isTrifecta && combo.length === 3) {
+        results.push(combo.join("-"));
+      } else if (!isTrifecta) {
+        results.push([...new Set(combo)].sort().join("-"));
+      }
     }
-    return isTrifecta ? results.map(p => p.join("-")) : results.map(p => [...new Set(p)].sort().join("-"));
+    return results;
   }
 
   if (parts.length === 3) {
@@ -58,7 +63,9 @@ function generateCombinations(arr, r, isTrifecta) {
   const results = [];
   const helper = (prefix, rest) => {
     if (prefix.length === r) {
-      results.push(isTrifecta ? prefix.slice().join("-") : prefix.slice().sort().join("-"));
+      if (new Set(prefix).size === r) {
+        results.push(isTrifecta ? prefix.slice().join("-") : prefix.slice().sort().join("-"));
+      }
       return;
     }
     for (let i = 0; i < rest.length; i++) {
@@ -170,7 +177,7 @@ function App() {
             />
             {expanded[id] && (
               <details>
-                <summary>展開後の馬券</summary>
+                <summary>展開後の馬券（{isTrifecta ? "三連単" : "三連複"}）</summary>
                 <ul className="expanded-list">
                   {expanded[id].map((t, i) => <li key={i}>{t}</li>)}
                 </ul>
