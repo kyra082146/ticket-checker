@@ -31,10 +31,9 @@ function expandTicketLine(line, isTrifecta) {
     const results = [];
     for (const t of targets) {
       const combo = [...base, t];
-      if (isTrifecta && combo.length === 3) {
-        results.push(combo.join("-"));
-      } else if (!isTrifecta) {
-        results.push([...new Set(combo)].sort().join("-"));
+      const unique = [...new Set(combo)];
+      if (unique.length === 3) {
+        results.push(isTrifecta ? combo.join("-") : unique.sort().join("-"));
       }
     }
     return results;
@@ -42,18 +41,19 @@ function expandTicketLine(line, isTrifecta) {
 
   if (parts.length === 3) {
     const [a, b, c] = parts;
-    const results = [];
+    const results = new Set();
     for (const i of a) {
       for (const j of b) {
         for (const k of c) {
-          if (i !== j && j !== k && i !== k) {
-            const trio = [i, j, k];
-            results.push(isTrifecta ? trio.join("-") : [...new Set(trio)].sort().join("-"));
+          const trio = [i, j, k];
+          if (new Set(trio).size === 3) {
+            const ticket = isTrifecta ? trio.join("-") : trio.sort().join("-");
+            results.add(ticket);
           }
         }
       }
     }
-    return results;
+    return [...results];
   }
 
   return [line];
@@ -78,7 +78,9 @@ function generatePermutations(arr, r) {
   const results = [];
   const permute = (path, used) => {
     if (path.length === r) {
-      results.push(path.join("-"));
+      if (new Set(path).size === r) {
+        results.push(path.join("-"));
+      }
       return;
     }
     for (let i = 0; i < arr.length; i++) {
@@ -181,7 +183,7 @@ function App() {
               value={value}
               onChange={e => handleChange(id, e.target.value)}
               placeholder={`例：
-1頭流し：1-2,3,4-2,3,4
+1頭流し：1-2,3,4
 2頭流し：1-2-3,4,5
 フォーメーション：1-2,3-2,3,4,5
 ボックス：1,2,3,4`}
