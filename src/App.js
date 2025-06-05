@@ -41,8 +41,10 @@ function expandTicketLine(line, isTrifecta) {
     for (const i of a) {
       for (const j of b) {
         for (const k of c) {
-          const trio = [i, j, k];
-          results.push(isTrifecta ? trio.join("-") : [...new Set(trio)].sort().join("-"));
+          if (i !== j && j !== k && i !== k) {
+            const trio = [i, j, k];
+            results.push(isTrifecta ? trio.join("-") : [...new Set(trio)].sort().join("-"));
+          }
         }
       }
     }
@@ -153,7 +155,7 @@ function App() {
               value={value}
               onChange={e => handleChange(id, e.target.value)}
               placeholder={`例：
-1頭流し：1-2,3,4-2,3,4
+1頭流し：1-2,3,4
 2頭流し：1-2-3,4,5
 フォーメーション：1-2,3-2,3,4,5
 ボックス：1,2,3,4`}
