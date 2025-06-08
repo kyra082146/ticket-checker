@@ -7,18 +7,21 @@ const MAX_SETS = 5;
 function App() {
   const [isTrio, setIsTrio] = useState(true);
   const [sets, setSets] = useState([
-    { mode: "1頭軸", main1: [], main2: [], partner: [], expanded: [], count: 0 },
+    {
+      mode: "1頭軸",
+      main1: [],
+      main2: [],
+      main3: [],
+      partner: [],
+      expanded: [],
+      count: 0,
+      show: false,
+    },
   ]);
-
-  const toggleNumber = (num, list, setList) => {
-    setList((prev) =>
-      prev.includes(num) ? prev.filter((n) => n !== num) : [...prev, num]
-    );
-  };
 
   const generateCombinations = (set) => {
     let result = [];
-    const { mode, main1, main2, partner } = set;
+    const { mode, main1, main2, main3, partner } = set;
     if (mode === "1頭軸") {
       main1.forEach((m) => {
         for (let i = 0; i < partner.length; i++) {
@@ -48,13 +51,13 @@ function App() {
         });
       });
     } else if (mode === "フォーメーション") {
-      main1.forEach((m1) => {
-        main2.forEach((m2) => {
-          partner.forEach((p) => {
-            if (m1 !== m2 && m1 !== p && m2 !== p) {
+      main1.forEach((a) => {
+        main2.forEach((b) => {
+          main3.forEach((c) => {
+            if (a !== b && a !== c && b !== c) {
               const combo = isTrio
-                ? [m1, m2, p].sort((a, b) => a - b)
-                : [m1, m2, p];
+                ? [a, b, c].sort((x, y) => x - y)
+                : [a, b, c];
               result.push(combo.join("-"));
             }
           });
@@ -77,11 +80,22 @@ function App() {
 
   const updateSet = (index, updatedSet) => {
     const newSets = [...sets];
-    const expanded = generateCombinations(updatedSet);
     newSets[index] = {
       ...updatedSet,
+      show: false, // 再展開前に非表示
+    };
+    setSets(newSets);
+  };
+
+  const expandSet = (index) => {
+    const newSets = [...sets];
+    const set = newSets[index];
+    const expanded = generateCombinations(set);
+    newSets[index] = {
+      ...set,
       expanded,
       count: expanded.length,
+      show: true,
     };
     setSets(newSets);
   };
@@ -100,168 +114,85 @@ function App() {
         />
         三連複
       </label>
-      {sets.map((set, idx) => (
-        <div key={idx} className="set-container">
-          <h2>セット{String.fromCharCode(65 + idx)}</h2>
-          <div className="mode-selector">
-            {["1頭軸", "2頭軸", "フォーメーション", "BOX"].map((m) => (
-              <button
-                key={m}
-                className={set.mode === m ? "active" : ""}
-                onClick={() =>
-                  updateSet(idx, { ...set, mode: m, main1: [], main2: [], partner: [] })
-                }
-              >
-                {m}
-              </button>
-            ))}
+      <div className="set-row">
+        {sets.map((set, idx) => (
+          <div key={idx} className="set-container">
+            <h2>セット{String.fromCharCode(65 + idx)}</h2>
+            <div className="mode-selector">
+              {["1頭軸", "2頭軸", "フォーメーション", "BOX"].map((m) => (
+                <button
+                  key={m}
+                  className={set.mode === m ? "active" : ""}
+                  onClick={() =>
+                    updateSet(idx, {
+                      mode: m,
+                      main1: [],
+                      main2: [],
+                      main3: [],
+                      partner: [],
+                      expanded: [],
+                      count: 0,
+                      show: false,
+                    })
+                  }
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+
+            {set.mode === "1頭軸" && (
+              <NumberSelector label="軸馬" selected={set.main1} onChange={(nums) => updateSet(idx, { ...set, main1: nums })} />
+            )}
+            {set.mode === "2頭軸" && (
+              <>
+                <NumberSelector label="軸馬1" selected={set.main1} onChange={(nums) => updateSet(idx, { ...set, main1: nums })} />
+                <NumberSelector label="軸馬2" selected={set.main2} onChange={(nums) => updateSet(idx, { ...set, main2: nums })} />
+              </>
+            )}
+            {set.mode === "フォーメーション" && (
+              <>
+                <NumberSelector label="1列目" selected={set.main1} onChange={(nums) => updateSet(idx, { ...set, main1: nums })} />
+                <NumberSelector label="2列目" selected={set.main2} onChange={(nums) => updateSet(idx, { ...set, main2: nums })} />
+                <NumberSelector label="3列目" selected={set.main3} onChange={(nums) => updateSet(idx, { ...set, main3: nums })} />
+              </>
+            )}
+            {set.mode === "BOX" && (
+              <NumberSelector label="ボックス馬" selected={set.partner} onChange={(nums) => updateSet(idx, { ...set, partner: nums })} />
+            )}
+
+            <div className="action-bar">
+              <button onClick={() => expandSet(idx)}>展開（{set.count}点）</button>
+            </div>
+
+            {set.show && (
+              <ul>
+                {set.expanded.map((item, i) => (
+                  <li key={i} style={{ color: duplicates.includes(item) ? "red" : "black" }}>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
-
-          {(set.mode === "1頭軸" || set.mode === "2頭軸") && (
-            <div className="selector">
-              <strong>軸馬{set.mode === "2頭軸" ? "1" : ""}:</strong>
-              <div className="checkbox-group">
-                {horseNumbers.map((num) => (
-                  <label key={num}>
-                    <input
-                      type="checkbox"
-                      checked={set.main1.includes(num)}
-                      onChange={() =>
-                        updateSet(idx, {
-                          ...set,
-                          main1: set.main1.includes(num)
-                            ? set.main1.filter((n) => n !== num)
-                            : [...set.main1, num],
-                        })
-                      }
-                    />
-                    {num}
-                  </label>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {set.mode === "2頭軸" && (
-            <div className="selector">
-              <strong>軸馬2:</strong>
-              <div className="checkbox-group">
-                {horseNumbers.map((num) => (
-                  <label key={num}>
-                    <input
-                      type="checkbox"
-                      checked={set.main2.includes(num)}
-                      onChange={() =>
-                        updateSet(idx, {
-                          ...set,
-                          main2: set.main2.includes(num)
-                            ? set.main2.filter((n) => n !== num)
-                            : [...set.main2, num],
-                        })
-                      }
-                    />
-                    {num}
-                  </label>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {(set.mode === "1頭軸" || set.mode === "2頭軸" || set.mode === "フォーメーション") && (
-            <div className="selector">
-              <strong>{set.mode === "フォーメーション" ? "相手馬2" : "相手馬"}:</strong>
-              <div className="checkbox-group">
-                {horseNumbers.map((num) => (
-                  <label key={num}>
-                    <input
-                      type="checkbox"
-                      checked={set.partner.includes(num)}
-                      onChange={() =>
-                        updateSet(idx, {
-                          ...set,
-                          partner: set.partner.includes(num)
-                            ? set.partner.filter((n) => n !== num)
-                            : [...set.partner, num],
-                        })
-                      }
-                    />
-                    {num}
-                  </label>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {set.mode === "フォーメーション" && (
-            <div className="selector">
-              <strong>相手馬1:</strong>
-              <div className="checkbox-group">
-                {horseNumbers.map((num) => (
-                  <label key={num}>
-                    <input
-                      type="checkbox"
-                      checked={set.main2.includes(num)}
-                      onChange={() =>
-                        updateSet(idx, {
-                          ...set,
-                          main2: set.main2.includes(num)
-                            ? set.main2.filter((n) => n !== num)
-                            : [...set.main2, num],
-                        })
-                      }
-                    />
-                    {num}
-                  </label>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {set.mode === "BOX" && (
-            <div className="selector">
-              <strong>ボックス馬:</strong>
-              <div className="checkbox-group">
-                {horseNumbers.map((num) => (
-                  <label key={num}>
-                    <input
-                      type="checkbox"
-                      checked={set.partner.includes(num)}
-                      onChange={() =>
-                        updateSet(idx, {
-                          ...set,
-                          partner: set.partner.includes(num)
-                            ? set.partner.filter((n) => n !== num)
-                            : [...set.partner, num],
-                        })
-                      }
-                    />
-                    {num}
-                  </label>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="action-bar">
-            <button onClick={() => updateSet(idx, set)}>展開（{set.count}点）</button>
-          </div>
-
-          <ul>
-            {set.expanded.map((item, i) => (
-              <li key={i} style={{ color: duplicates.includes(item) ? "red" : "black" }}>
-                {item}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
+        ))}
+      </div>
 
       {sets.length < MAX_SETS && (
         <button
           onClick={() =>
             setSets([
               ...sets,
-              { mode: "1頭軸", main1: [], main2: [], partner: [], expanded: [], count: 0 },
+              {
+                mode: "1頭軸",
+                main1: [],
+                main2: [],
+                main3: [],
+                partner: [],
+                expanded: [],
+                count: 0,
+                show: false,
+              },
             ])
           }
         >
@@ -272,6 +203,33 @@ function App() {
       {sets.length > 1 && (
         <button onClick={() => setSets(sets.slice(0, -1))}>セット削除</button>
       )}
+    </div>
+  );
+}
+
+function NumberSelector({ label, selected, onChange }) {
+  const toggleNumber = (num) => {
+    onChange(
+      selected.includes(num)
+        ? selected.filter((n) => n !== num)
+        : [...selected, num]
+    );
+  };
+  return (
+    <div className="selector">
+      <strong>{label}:</strong>
+      <div className="checkbox-group grid">
+        {horseNumbers.map((num) => (
+          <label key={num}>
+            <input
+              type="checkbox"
+              checked={selected.includes(num)}
+              onChange={() => toggleNumber(num)}
+            />
+            {num}
+          </label>
+        ))}
+      </div>
     </div>
   );
 }
