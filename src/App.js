@@ -1,110 +1,91 @@
 import React, { useState } from "react";
 import "./App.css";
 
-const horseNumbers = Array.from({ length: 18 }, (_, i) => i + 1);
-const MAX_SETS = 5;
-
 function App() {
+  const [bets, setBets] = useState([{ name: "セットA", value: "" }]);
   const [isTrio, setIsTrio] = useState(true);
-  const [sets, setSets] = useState([
-    {
-      mode: "1頭軸",
-      main1: [],
-      main2: [],
-      main3: [],
-      partner: [],
-      expanded: [],
-      count: 0,
-      show: false,
-    },
-  ]);
 
-  const generateCombinations = (set) => {
-    let result = [];
-    const { mode, main1, main2, main3, partner } = set;
-    if (mode === "1頭軸") {
-      main1.forEach((m) => {
-        for (let i = 0; i < partner.length; i++) {
-          for (let j = i + 1; j < partner.length; j++) {
-            if (partner[i] !== m && partner[j] !== m) {
-              const combo = isTrio
-                ? [m, partner[i], partner[j]].sort((a, b) => a - b)
-                : [m, partner[i], partner[j]];
-              result.push(combo.join("-"));
-            }
-          }
+  const handleChange = (index, value) => {
+    const newBets = [...bets];
+    newBets[index].value = value;
+    setBets(newBets);
+  };
+
+  const addSet = () => {
+    const nextLetter = String.fromCharCode(65 + bets.length);
+    setBets([...bets, { name: `セット${nextLetter}`, value: "" }]);
+  };
+
+  const removeSet = () => {
+    if (bets.length > 1) {
+      setBets(bets.slice(0, -1));
+    }
+  };
+
+  const expandBets = (input) => {
+    const result = new Set();
+    const parts = input.split("-");
+
+    if (parts.length === 1) {
+      // BOX
+      const nums = parts[0].split(",").map(Number);
+      const combinations = getCombinations(nums, 3);
+      combinations.forEach((combo) => {
+        result.add(formatCombo(combo));
+      });
+    } else if (parts.length === 2) {
+      // 1頭軸
+      const axis = parts[0];
+      const secondParts = parts[1].split(",");
+      for (let i = 0; i < secondParts.length; i++) {
+        for (let j = i + 1; j < secondParts.length; j++) {
+          result.add(formatCombo([Number(axis), Number(secondParts[i]), Number(secondParts[j])]));
         }
-      });
-    } else if (mode === "2頭軸") {
-      main1.forEach((m1) => {
-        main2.forEach((m2) => {
-          if (m1 !== m2) {
-            partner.forEach((p) => {
-              if (p !== m1 && p !== m2) {
-                const combo = isTrio
-                  ? [m1, m2, p].sort((a, b) => a - b)
-                  : [m1, m2, p];
-                result.push(combo.join("-"));
-              }
-            });
-          }
-        });
-      });
-    } else if (mode === "フォーメーション") {
-      main1.forEach((a) => {
-        main2.forEach((b) => {
-          main3.forEach((c) => {
-            if (a !== b && a !== c && b !== c) {
-              const combo = isTrio
-                ? [a, b, c].sort((x, y) => x - y)
-                : [a, b, c];
-              result.push(combo.join("-"));
+      }
+    } else if (parts.length === 3) {
+      // フォーメーション
+      const p1 = parts[0].split(",").map(Number);
+      const p2 = parts[1].split(",").map(Number);
+      const p3 = parts[2].split(",").map(Number);
+      p1.forEach((a) => {
+        p2.forEach((b) => {
+          p3.forEach((c) => {
+            const combo = [a, b, c];
+            if (new Set(combo).size === 3) {
+              result.add(formatCombo(combo));
             }
           });
         });
       });
-    } else if (mode === "BOX") {
-      for (let i = 0; i < partner.length; i++) {
-        for (let j = i + 1; j < partner.length; j++) {
-          for (let k = j + 1; k < partner.length; k++) {
-            const combo = isTrio
-              ? [partner[i], partner[j], partner[k]].sort((a, b) => a - b)
-              : [partner[i], partner[j], partner[k]];
-            result.push(combo.join("-"));
-          }
-        }
-      }
     }
+
+    return Array.from(result);
+  };
+
+  const formatCombo = (combo) => {
+    return isTrio ? combo.sort((a, b) => a - b).join("-") : combo.join("-");
+  };
+
+  const getCombinations = (arr, k) => {
+    const result = [];
+    const combine = (start, path) => {
+      if (path.length === k) {
+        result.push([...path]);
+        return;
+      }
+      for (let i = start; i < arr.length; i++) {
+        combine(i + 1, [...path, arr[i]]);
+      }
+    };
+    combine(0, []);
     return result;
   };
 
-  const updateSet = (index, updatedSet) => {
-    const newSets = [...sets];
-    newSets[index] = {
-      ...updatedSet,
-      show: false, // 再展開前に非表示
-    };
-    setSets(newSets);
-  };
-
-  const expandSet = (index) => {
-    const newSets = [...sets];
-    const set = newSets[index];
-    const expanded = generateCombinations(set);
-    newSets[index] = {
-      ...set,
-      expanded,
-      count: expanded.length,
-      show: true,
-    };
-    setSets(newSets);
-  };
-
-  const allBets = sets.flatMap((s) => s.expanded);
-  const duplicates = allBets.filter((item, idx, arr) => arr.indexOf(item) !== idx);
+  const allTickets = bets.flatMap((set) => expandBets(set.value));
+  const duplicates = allTickets.filter((item, index, self) => self.indexOf(item) !== index);
 
   return (
-    <div className="app-container">
+    <div className="App">
       <h1>馬券チェッカー</h1>
       <label>
         <input
@@ -114,122 +95,38 @@ function App() {
         />
         三連複
       </label>
-      <div className="set-row">
-        {sets.map((set, idx) => (
-          <div key={idx} className="set-container">
-            <h2>セット{String.fromCharCode(65 + idx)}</h2>
-            <div className="mode-selector">
-              {["1頭軸", "2頭軸", "フォーメーション", "BOX"].map((m) => (
-                <button
-                  key={m}
-                  className={set.mode === m ? "active" : ""}
-                  onClick={() =>
-                    updateSet(idx, {
-                      mode: m,
-                      main1: [],
-                      main2: [],
-                      main3: [],
-                      partner: [],
-                      expanded: [],
-                      count: 0,
-                      show: false,
-                    })
-                  }
+      <div className="sets">
+        {bets.map((set, index) => (
+          <div key={index} className="set">
+            <h3>{set.name}</h3>
+            <p className="hint">
+              例：1頭流し：1-2,3,4-2,3,4<br />
+              　　2頭流し：1-2-3,4,5<br />
+              　　フォーメーション：1-2,3-2,3,4,5<br />
+              　　ボックス：1,2,3,4
+            </p>
+            <textarea
+              value={set.value}
+              onChange={(e) => handleChange(index, e.target.value)}
+              rows={2}
+              cols={30}
+            />
+            <p>{expandBets(set.value).length}点</p>
+            <ul>
+              {expandBets(set.value).map((ticket, i) => (
+                <li
+                  key={i}
+                  style={{ color: duplicates.includes(ticket) ? "red" : "black" }}
                 >
-                  {m}
-                </button>
+                  {ticket}
+                </li>
               ))}
-            </div>
-
-            {set.mode === "1頭軸" && (
-              <NumberSelector label="軸馬" selected={set.main1} onChange={(nums) => updateSet(idx, { ...set, main1: nums })} />
-            )}
-            {set.mode === "2頭軸" && (
-              <>
-                <NumberSelector label="軸馬1" selected={set.main1} onChange={(nums) => updateSet(idx, { ...set, main1: nums })} />
-                <NumberSelector label="軸馬2" selected={set.main2} onChange={(nums) => updateSet(idx, { ...set, main2: nums })} />
-              </>
-            )}
-            {set.mode === "フォーメーション" && (
-              <>
-                <NumberSelector label="1列目" selected={set.main1} onChange={(nums) => updateSet(idx, { ...set, main1: nums })} />
-                <NumberSelector label="2列目" selected={set.main2} onChange={(nums) => updateSet(idx, { ...set, main2: nums })} />
-                <NumberSelector label="3列目" selected={set.main3} onChange={(nums) => updateSet(idx, { ...set, main3: nums })} />
-              </>
-            )}
-            {set.mode === "BOX" && (
-              <NumberSelector label="ボックス馬" selected={set.partner} onChange={(nums) => updateSet(idx, { ...set, partner: nums })} />
-            )}
-
-            <div className="action-bar">
-              <button onClick={() => expandSet(idx)}>展開（{set.count}点）</button>
-            </div>
-
-            {set.show && (
-              <ul>
-                {set.expanded.map((item, i) => (
-                  <li key={i} style={{ color: duplicates.includes(item) ? "red" : "black" }}>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            )}
+            </ul>
           </div>
         ))}
       </div>
-
-      {sets.length < MAX_SETS && (
-        <button
-          onClick={() =>
-            setSets([
-              ...sets,
-              {
-                mode: "1頭軸",
-                main1: [],
-                main2: [],
-                main3: [],
-                partner: [],
-                expanded: [],
-                count: 0,
-                show: false,
-              },
-            ])
-          }
-        >
-          セット追加
-        </button>
-      )}
-
-      {sets.length > 1 && (
-        <button onClick={() => setSets(sets.slice(0, -1))}>セット削除</button>
-      )}
-    </div>
-  );
-}
-
-function NumberSelector({ label, selected, onChange }) {
-  const toggleNumber = (num) => {
-    onChange(
-      selected.includes(num)
-        ? selected.filter((n) => n !== num)
-        : [...selected, num]
-    );
-  };
-  return (
-    <div className="selector">
-      <strong>{label}:</strong>
-      <div className="checkbox-group grid">
-        {horseNumbers.map((num) => (
-          <label key={num}>
-            <input
-              type="checkbox"
-              checked={selected.includes(num)}
-              onChange={() => toggleNumber(num)}
-            />
-            {num}
-          </label>
-        ))}
-      </div>
+      <button onClick={addSet}>セット追加</button>
+      <button onClick={removeSet}>セット削除</button>
     </div>
   );
 }

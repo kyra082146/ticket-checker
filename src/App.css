@@ -1,54 +1,43 @@
-.app-container {
-  padding: 1rem;
+.App {
   font-family: sans-serif;
+  padding: 1rem;
 }
 
-.set-row {
+.sets {
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
 }
 
-.set-container {
-  border: 2px solid #ccc;
-  border-radius: 12px;
+.set {
+  border: 1px solid #ccc;
   padding: 1rem;
-  min-width: 260px;
+  border-radius: 8px;
+  min-width: 250px;
   flex: 1;
-  max-width: 400px;
+  max-width: 300px;
 }
 
-.mode-selector button {
-  margin: 0.2rem;
-  padding: 0.3rem 0.6rem;
-  border-radius: 6px;
-  border: 1px solid #888;
-  background: #eee;
-  cursor: pointer;
-}
-
-.mode-selector .active {
-  background-color: #3399ff;
-  color: white;
-  font-weight: bold;
-}
-
-.selector {
+textarea {
+  width: 100%;
+  font-size: 1rem;
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
 }
 
-.checkbox-group.grid {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 0.2rem;
-}
-
-.action-bar {
-  margin-top: 0.8rem;
-  margin-bottom: 0.5rem;
-}
-
 button {
+  margin-top: 1rem;
+  margin-right: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
   cursor: pointer;
+}
+
+li {
+  list-style: none;
+}
+
+.hint {
+  font-size: 0.8rem;
+  color: #555;
 }
